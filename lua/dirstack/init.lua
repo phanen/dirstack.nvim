@@ -11,9 +11,17 @@ local push = function(path)
   node = node.next
 end
 
+local list_callback = function(callback, ...)
+  local it = head
+  while it do
+    callback(it, ...)
+    it = it.next
+  end
+end
+
 local switch_to = function(new_node)
   if new_node == nil then
-    -- vim.api.nvim_err_writeln "no such node"
+    if dbg then vim.api.nvim_err_writeln "no such node" end
     return
   end
   -- NOTE: switch node first, then DirChanged
@@ -24,17 +32,12 @@ local switch_to = function(new_node)
 end
 
 local info = function()
-  local it = head
-  local info = ""
-  while it do
-    if it == node then
-      info = info .. "> " .. it.dir .. "\n"
-    else
-      info = info .. "  " .. it.dir .. "\n"
-    end
-    it = it.next
-  end
-  vim.notify(info)
+  local msg = ""
+  list_callback(function(it)
+    local pad = (it == node and "> " or "  ")
+    msg = msg .. pad .. it.dir .. "\n"
+  end)
+  vim.notify(msg)
 end
 
 return {
