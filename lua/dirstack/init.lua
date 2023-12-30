@@ -6,13 +6,7 @@ local head = {
 
 local node = head
 
-local cd = function(path)
-  local bak = vim.o.eventignore
-  vim.o.eventignore = "DirChanged"
-  local prev_dir = vim.fn.chdir(path)
-  vim.o.eventignore = bak
-  return prev_dir
-end
+local cd = vim.fn.chdir
 
 return {
   info = function()
@@ -50,12 +44,13 @@ return {
   setup = function()
     node.dir = vim.fn.getcwd()
     vim.api.nvim_create_autocmd("DirChanged", {
-      callback = function()
+      callback = function(ev)
         local cwd = vim.fn.getcwd()
-        -- if cwd == node.dir then return end
+        -- `prev`/`next` should not trigger `DirChanged`, but set `eventignore` may break other plugins
+        -- to determine if we're from `prev`/`next` previously, this hack is sufficient to provide soundness
+        if cwd == node.dir then return end
         node.next = { next = nil, prev = node, dir = cwd }
         node = node.next
-        vim.print "fuck"
       end,
     })
   end,
