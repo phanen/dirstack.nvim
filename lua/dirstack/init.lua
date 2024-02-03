@@ -11,29 +11,27 @@ local push = function(path)
   node = node.next
 end
 
-local list_callback = function(callback, ...)
+local list_cb = function(cb, ...)
   local it = head
   while it do
-    callback(it, ...)
+    cb(it, ...)
     it = it.next
   end
 end
 
+-- TODO: better to use non-nest event
 local switch_to = function(new_node)
-  if new_node == nil then
-    if dbg then vim.api.nvim_err_writeln "no such node" end
-    return
-  end
+  if new_node == nil then return end
   -- NOTE: switch node first, then DirChanged
   node = new_node
   local dir = cd(node.dir)
   -- TODO: dir has been delete
-  if dir then vim.notify(dir .. " -> " .. node.dir) end
+  if dir then vim.notify("-> " .. node.dir) end
 end
 
 local info = function()
   local msg = ""
-  list_callback(function(it)
+  list_cb(function(it)
     local pad = (it == node and "> " or "  ")
     msg = msg .. pad .. it.dir .. "\n"
   end)
@@ -49,8 +47,6 @@ return {
     vim.api.nvim_create_autocmd("DirChanged", {
       callback = function(ev)
         local cwd = ev.file
-        -- `prev`/`next` should not trigger `DirChanged`, but set `eventignore` may break other plugins
-        -- to determine if we're from `prev`/`next` previously, this hack is sufficient to provide soundness
         if cwd == node.dir then return end
         push(cwd)
       end,
