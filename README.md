@@ -7,13 +7,16 @@ A directory navigator, with similar model to vim's builtin undolist.
 use `lazy.nvim`
 ```lua
 {
-  "phanen/dirstack.nvim",
-  event = "DirChangedPre",
+  'phanen/dirstack.nvim',
   keys = {
-    { "<c-p>", function() require("dirstack").prev() end },
-    { "<c-n>", function() require("dirstack").next() end },
-    { "<c-g>", function() require("dirstack").info() end },
+    { '<leader><c-p>', "<cmd>lua require('dirstack').prev()<cr>" },
+    { '<leader><c-n>', "<cmd>lua require('dirstack').next()<cr>" },
+    { '<leader><c-x>', "<cmd>lua require('dirstack').info()<cr>" },
   },
-  config = true,
 },
 ```
+
+## todo
+* [ ] remove duplicated entries
+* [ ] jumplists like info/command
+* [ ] number `[num][operation]`
