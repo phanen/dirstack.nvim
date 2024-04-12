@@ -15,7 +15,7 @@ local init = function()
   local node = { n = tail, p = head, dir = dir }
   head.n = node
   tail.p = node
-  cache = { dir = node }
+  cache = { [dir] = node }
   curr = node
 end
 
