@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.0.0](https://github.com/phanen/dirstack.nvim/compare/v1.0.0...v2.0.0) (2024-04-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* handle duplicated record
+
+### Features
+
+* add commands ([282fdc9](https://github.com/phanen/dirstack.nvim/commit/282fdc918918c1c769c3aabe4ac372923b9fb989))
+
+
+### Bug Fixes
+
+* key should be eval ([671c438](https://github.com/phanen/dirstack.nvim/commit/671c4384ae72b25d514df4ca296e758febee678c))
+
+
+### Code Refactoring
+
+* handle duplicated record ([af9310a](https://github.com/phanen/dirstack.nvim/commit/af9310ad5769cfe359324100775c5f644ac2ade5))
+
 ## 1.0.0 (2024-01-07)
 
 
