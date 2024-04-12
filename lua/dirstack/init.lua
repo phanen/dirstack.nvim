@@ -58,6 +58,7 @@ M.setup = function()
   })
 end
 
+local count = nil
 M.prev = function(level)
   level = level or 0
 
@@ -84,6 +85,14 @@ M.prev = function(level)
   skip_hook = true
   vim.fn.chdir(dir)
   skip_hook = false
+
+  count = count and count or vim.v.count1
+  if count == 1 then
+    count = nil
+    return
+  end
+  count = count - 1
+  return M.prev()
 end
 
 M.next = function(level)
@@ -108,6 +117,14 @@ M.next = function(level)
   skip_hook = true
   vim.fn.chdir(dir)
   skip_hook = false
+
+  count = count and count or vim.v.count1
+  if count == 1 then
+    count = nil
+    return
+  end
+  count = count - 1
+  return M.next()
 end
 
 M.hist = function()

@@ -29,7 +29,7 @@ use `lazy.nvim`
 ## todo
 * [x] refactor as "hybride" mode (avoid duplicated entries + stack-like discard)
 * [x] handle deleted directory history
-* [ ] `[num][operate]`
+* [x] `[num][operate]`
 * [ ] limit dir cache/list size
 * [ ] colorful info
 * [ ] fzf-lua integration
