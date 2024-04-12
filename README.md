@@ -16,12 +16,13 @@ use `lazy.nvim`
 ```lua
 {
   'phanen/dirstack.nvim',
-  event = "DirchangedPre",
-  cmd = 'Dirs',
+  event = 'DirchangedPre',
   keys = {
     { '<leader><c-p>', "<cmd>lua require('dirstack').prev()<cr>" },
     { '<leader><c-n>', "<cmd>lua require('dirstack').next()<cr>" },
+    { '<leader><c-l>', "<cmd>lua require('dirstack').hist()<cr>" },
   },
+  opts = {},
 },
 ```
 
