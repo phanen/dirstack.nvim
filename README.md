@@ -1,10 +1,15 @@
 # dirstack.nvim
 
-A smart directory history navigator similar `tagstack`
+A smart directory history navigator similar to `tagstack`.
 
 ## features
-* avoid duplicated history record
-* auto ignore/sweep deleted directory in history
+* similar to `tagstack`
+  * new records will be added after current one
+  * subsequent records will be discard
+* differ from `tagstack`
+  * records will be never duplicated
+  * duplicated ones will be move after current one
+* auto ignore and sweep deleted directory in history
 * commands
   * `Dirs`: list your dirs history, in `:jumps` format
   * `Dirp`: goto previous dir in directory history
@@ -26,10 +31,52 @@ use `lazy.nvim`
 },
 ```
 
+## example
+
+`:Dirs`
+```
+  /a
+  /b
+> /c
+```
+
+`:Dirp`
+```
+  /a
+> /b
+  /c
+```
+
+`:cd /c | cd /d | cd /e | cd /f | cd /f` (ignore duplicated)
+```
+  /a
+  /c
+  /d
+  /e
+> /f
+```
+
+`:Dirp`, `:Dirp`
+```
+  /a
+  /c
+> /d
+  /e
+  /f
+```
+
+`:cd /a`
+```
+  /c
+  /d
+> /a
+```
+
 ## todo
-* [x] refactor as "hybride" mode (avoid duplicated entries + stack-like discard)
+* [x] refactor as "stack" mode
 * [x] handle deleted directory history
-* [x] `[num][operate]`
-* [ ] limit dir cache/list size
+* [x] `[number][operation]`
+* [ ] `vim.ui.select`
+* [ ] what if dir died due to moved?
 * [ ] colorful info
-* [ ] fzf-lua integration
+* [ ] limit dir cache/list size
