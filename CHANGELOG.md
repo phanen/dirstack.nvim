@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/phanen/dirstack.nvim/compare/v2.0.0...v2.0.1) (2024-04-15)
+
+
+### Bug Fixes
+
+* now it's just a de-dup tagstack ([37e5a1c](https://github.com/phanen/dirstack.nvim/commit/37e5a1c3ba924130cd3802a1d7c528e6857d1af6))
+
 ## [2.0.0](https://github.com/phanen/dirstack.nvim/compare/v1.0.0...v2.0.0) (2024-04-12)
 
 
