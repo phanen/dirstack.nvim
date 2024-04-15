@@ -23,35 +23,31 @@ M.setup = function()
   init()
   vim.api.nvim_create_autocmd('DirChanged', {
     group = vim.api.nvim_create_augroup('dirstack', { clear = true }),
-    callback = function(ev)
-      local dir = ev.file
+    callback = function(args)
+      local dir = args.file
 
       -- explictly check instead of hack
       if skip_hook or dir == curr.dir or dir == '' then return end
 
-      -- default jumplist-like: skip duplicate
+      -- like tagstack: we insert node after current one, discard subsequent nodes
       local node = cache[dir]
-      if node then -- duplicate
+      if node then -- "remove" duplicate records
         node.p.n = node.n
         node.n.p = node.p
-        node.n = tail
-        node.p = tail.p
-        tail.p.n = node
-        tail.p = node
-        curr = node
-        return
+      else
+        node = { dir = dir }
       end
+      node.n = tail
+      node.p = curr
 
-      -- tagstack-like: insert node after current one (instead of in the tail)
-      -- then we discard unneeded history
-      node = { n = tail, p = curr, dir = dir }
-      tail.p = node
       local to_delete = curr.n
       while to_delete and to_delete ~= tail do
         cache[to_delete.dir] = nil
         to_delete = to_delete.n
       end
+
       curr.n = node
+      tail.p = node
       curr = node
       cache[dir] = node
     end,
