@@ -76,7 +76,5 @@ use `lazy.nvim`
 * [x] refactor as "stack" mode
 * [x] handle deleted directory history
 * [x] `[number][operation]`
-* [ ] `vim.ui.select`
-* [ ] what if dir died due to moved?
-* [ ] colorful info
-* [ ] limit dir cache/list size
+* [x] `ui.select`/ fzf-lua
+* [x] handle "died" entry
