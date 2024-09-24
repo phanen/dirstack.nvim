@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.0.0](https://github.com/phanen/dirstack.nvim/compare/v2.0.1...v3.0.0) (2024-09-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* ui select
+
+### Features
+
+* ui select ([f5efd5e](https://github.com/phanen/dirstack.nvim/commit/f5efd5e8c7768c22d2d52f6d1ae827a54ccaf416))
+
+
+### Bug Fixes
+
+* drop poor v:count support ([f5efd5e](https://github.com/phanen/dirstack.nvim/commit/f5efd5e8c7768c22d2d52f6d1ae827a54ccaf416))
+
 ## [2.0.1](https://github.com/phanen/dirstack.nvim/compare/v2.0.0...v2.0.1) (2024-04-15)
 
 
