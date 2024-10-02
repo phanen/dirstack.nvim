@@ -1,8 +1,8 @@
 ---@alias HashKey string
 
 ---@class HashNode
----@field prev HashNode
----@field next HashNode
+---@field prev? HashNode
+---@field next? HashNode
 ---@field key HashKey
 
 ---@class HashList
