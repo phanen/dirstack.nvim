@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/phanen/dirstack.nvim/compare/v3.0.0...v3.0.1) (2024-10-02)
+
+
+### Bug Fixes
+
+* typing ([acd8111](https://github.com/phanen/dirstack.nvim/commit/acd8111cc600fc50157f6cffcd7e1d0454830287))
+
 ## [3.0.0](https://github.com/phanen/dirstack.nvim/compare/v2.0.1...v3.0.0) (2024-09-24)
 
 
