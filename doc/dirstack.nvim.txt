@@ -1,4 +1,4 @@
-*dirstack.nvim.txt*     For Neovim >= 0.8.0     Last change: 2024 September 24
+*dirstack.nvim.txt*      For Neovim >= 0.8.0      Last change: 2024 October 02
 
 ==============================================================================
 Table of Contents                            *dirstack.nvim-table-of-contents*
