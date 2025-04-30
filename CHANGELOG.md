@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/phanen/dirstack.nvim/compare/v3.0.1...v4.0.0) (2025-04-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* spiral
+
+### Features
+
+* spiral ([efa759f](https://github.com/phanen/dirstack.nvim/commit/efa759f8512626e776a1104b4f2a4d4eb4942b65))
+
 ## [3.0.1](https://github.com/phanen/dirstack.nvim/compare/v3.0.0...v3.0.1) (2024-10-02)
 
 
