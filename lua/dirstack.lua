@@ -1,120 +1,91 @@
-local Dirstack = {}
-
--- another problem: some DirChanged is ignored when nested in event (e.g. nvim-tree)
--- so patches may be needed
-
+---@diagnostic disable: duplicate-doc-field, duplicate-set-field, duplicate-doc-alias, unused-local
 local api, fn, uv = vim.api, vim.fn, vim.uv
-local log = vim.notify
 
----@type HashList
-local hlist
+local u = {
+  class = {
+    lru = require('dirstack.lru').new,
+  },
+}
 
----@type HashNode
-local curr -- minify context
+---START INJECT dirstack.lua
 
-local noau = false
-local chdir_noau = function(dir)
-  noau = true
+local M = {}
+
+local log = function(msg) return vim.notify(('[Dirstack] %s'):format(msg)) end
+M.lru = u.class.lru { ---@diagnostic disable-next-line: missing-fields
+  { key = fn.getcwd() },
+}
+M.curr = M.lru.head.next
+
+---@param dir string
+M.chdir = function(dir)
+  M._noau = true
   fn.chdir(dir)
-  noau = false
+  log(dir)
+  M._noau = false
 end
 
----maybe unsafe
-local build = function(next)
-  local nav = {
-    stop = next == 'prev' and hlist.head or hlist.tail,
-    next = next,
-  }
-  local function goto_next_clean(redo)
-    local node = assert(curr[nav.next])
-    if node == nav.stop then --
-      return log(('no %s'):format(nav.next))
+M.init = function() end
+
+---@param dir string
+M.on = function(dir)
+  if M._noau or dir == '' or dir == M.curr.key then return end
+  M.lru:access(dir)
+
+  local head = M.lru.head
+  local first = head.next
+  local curr = M.curr
+  local curr_prev = curr.prev
+  M.curr = first
+
+  if curr_prev == first then -- list is (head -> first -> curr)
+    return
+  end
+
+  local second = first.next
+  curr.prev = first
+  first.next = curr
+
+  local last = head.prev
+  local tmp = curr_prev.prev ---@type lru.Node
+  curr_prev.prev = last
+  last.next = curr_prev
+
+  while curr_prev ~= second do
+    curr_prev.next = tmp
+    local t = tmp.prev ---@type lru.Node
+    tmp.prev = curr_prev
+    curr_prev, tmp = tmp, t
+  end
+
+  head.prev = second
+  second.next = head
+end
+
+---@param direction 'next'|'prev'
+---@return function
+local nav_build = function(direction)
+  local function goto_next_clean(retry)
+    local node = M.curr[direction] ---@type lru.Node
+    if node == M.lru.head then --
+      return log(('%s (no %s)'):format(M.curr.key, direction))
     end
-    local dir = assert(node.key)
+    local dir = node.key
     if not uv.fs_stat(dir) then
-      redo = redo and redo + 1 or 1
-      log(('dir [%s] deleted, redo [%s]'):format(dir, redo))
-      curr[nav.next] = node[nav.next]
-      hlist:delete(node)
-      return goto_next_clean(redo)
+      retry = retry and retry + 1 or 1
+      log(('%s deleted, retry(%s)'):format(dir, retry))
+      M.curr[direction] --[[@type lru.Node]] = node[direction]
+      M.lru:delete(node)
+      return goto_next_clean(retry)
     end
-    curr = node
-    return chdir_noau(dir)
+    M.curr = node
+    return M.chdir(dir)
   end
   return goto_next_clean
 end
 
-local init = function()
-  local dir = assert(uv.cwd())
-  hlist = require('dirstack.hashlist') {}
-  curr = { key = dir } ---@type HashNode
-  hlist:push(curr)
-  Dirstack.prev = build 'prev'
-  Dirstack.next = build 'next'
-end
+M.prev = nav_build 'next'
 
-Dirstack.clear = init
+M.next = nav_build 'prev'
 
-Dirstack.hist = function()
-  local msg = {}
-  hlist:foreach(function(node)
-    local bar = node == curr and '> ' or '  '
-    msg[#msg + 1] = ('%s%s'):format(bar, node.key)
-  end)
-  log(table.concat(msg, '\n'))
-end
-
--- insert node after current one, discard subsequent nodes
--- dir should be expanded
--- before: head -> ... -> x -> ... -> tail
---                      (curr)
--- after:  head -> ... -> x -> node -> tail
---                            (curr)
-local on_dirchange = function(dir)
-  if dir == curr.key then return end
-  local node = hlist.hash[dir]
-  node = node and hlist:delete(node) or { key = dir }
-  hlist:delete_all_after(curr)
-  hlist:insert_after(curr, node)
-  curr = node
-end
-
-Dirstack.fuzzy = function()
-  local ok, _ = pcall(require, 'fzf-lua')
-  local fzf_fuzzy = function()
-    require('fzf-lua').fzf_exec(function(fzf_cb)
-      coroutine.wrap(function()
-        local co = coroutine.running()
-        hlist:foreach(function(node)
-          local dir = node.key
-          fzf_cb(dir, function() coroutine.resume(co) end)
-          coroutine.yield()
-        end)
-        fzf_cb(nil)
-      end)()
-    end, {
-      preview = 'eza --color=always -l {}',
-      actions = { ['enter'] = function(sel) fn.chdir(sel[1]) end },
-    })
-  end
-  local ui_select = function()
-    local items = {}
-    hlist:foreach(function(node) items[#items + 1] = node.key end)
-    vim.ui.select(items, { prompt = 'Dirstack: ' }, function(x) fn.chdir(x) end)
-  end
-  Dirstack.fuzzy = ok and fzf_fuzzy or ui_select
-  Dirstack.fuzzy()
-end
-
-Dirstack.setup = function()
-  init()
-  api.nvim_create_automd('Dirchanged', {
-    group = api.nvim_create_augorup('phanen/dirstack.nvim', { clear = true }),
-    callback = function(ev)
-      if noau or ev.file == '' then return end
-      on_dirchange(ev.file)
-    end,
-  })
-end
-
-return Dirstack
+return M
