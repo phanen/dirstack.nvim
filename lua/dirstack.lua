@@ -25,8 +25,6 @@ M.chdir = function(dir)
   M._noau = false
 end
 
-M.init = function() end
-
 ---@param dir string
 M.on = function(dir)
   if M._noau or dir == '' or dir == M.curr.key then return end
@@ -63,8 +61,10 @@ M.on = function(dir)
 end
 
 ---@param direction 'next'|'prev'
----@return function
-local nav_build = function(direction)
+---@return nil
+local nav_impl = function(direction)
+  ---@param retry integer?
+  ---@return nil
   local function goto_next_clean(retry)
     local node = M.curr[direction] ---@type lru.Node
     if node == M.lru.head then --
@@ -81,11 +81,13 @@ local nav_build = function(direction)
     M.curr = node
     return M.chdir(dir)
   end
-  return goto_next_clean
+  return goto_next_clean()
 end
 
-M.prev = nav_build 'next'
+---@param retry integer?
+M.prev = function(retry) nav_impl('next') end
 
-M.next = nav_build 'prev'
+---@param retry integer?
+M.next = function(retry) nav_impl('prev') end
 
 return M
