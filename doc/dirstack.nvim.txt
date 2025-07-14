@@ -1,9 +1,10 @@
-*dirstack.nvim.txt*       For Neovim >= 0.10.0      Last change: 2025 April 30
+*dirstack.nvim.txt*       For Neovim >= 0.10.0       Last change: 2025 July 14
 
 ==============================================================================
 Table of Contents                            *dirstack.nvim-table-of-contents*
 
 1. dirstack.nvim                                 |dirstack.nvim-dirstack.nvim|
+  - api                                      |dirstack.nvim-dirstack.nvim-api|
   - example                              |dirstack.nvim-dirstack.nvim-example|
 
 ==============================================================================
@@ -11,17 +12,12 @@ Table of Contents                            *dirstack.nvim-table-of-contents*
 
 "dirstack" but spiral.
 
+
+API                                          *dirstack.nvim-dirstack.nvim-api*
+
 >lua
-    {
-      'phanen/dirstack.nvim',
-      event = 'DirchangedPre',
-      keys = {
-        { '<leader><c-p>', "<cmd>lua require('dirstack').prev()<cr>" },
-        { '<leader><c-n>', "<cmd>lua require('dirstack').next()<cr>" },
-        { '<leader><c-l>', "<cmd>lua require('dirstack').hist()<cr>" },
-      },
-      opts = {},
-    },
+    require('dirstack').prev()
+    require('dirstack').next()
 <
 
 
