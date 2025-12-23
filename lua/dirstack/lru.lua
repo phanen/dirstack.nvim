@@ -17,14 +17,12 @@ local fn, api, uv = vim.fn, vim.api, vim.uv
 ---@field size integer
 local M = {}
 
----@param nodes? lru.Node[]
 ---@return lru.Lru
-M.new = function(nodes)
+M.new = function()
   local head = {}
   head.next = head
   head.prev = head
   local obj = setmetatable({ hash = {}, head = head, size = 0 }, { __index = M })
-  if nodes then vim.iter(nodes):each(function(node) obj:insert_after(obj.head.prev, node) end) end
   return obj
 end
 

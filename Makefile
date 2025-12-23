@@ -1,11 +1,9 @@
-# steal from gitsigns.nvim
-
 export PJ_ROOT=$(PWD)
 
 FILTER ?= .*
 
-export NVIM_RUNNER_VERSION := v0.11.0
-export NVIM_TEST_VERSION ?= v0.11.0
+export NVIM_RUNNER_VERSION := nightly
+export NVIM_TEST_VERSION ?= nightly
 
 ifeq ($(shell uname -s),Darwin)
     UNAME ?= MACOS
@@ -15,13 +13,22 @@ endif
 
 .DEFAULT_GOAL := build
 
+# ------------------------------------------------------------------------------
+# Nvim-test
+# ------------------------------------------------------------------------------
+
 NVIM_TEST := deps/nvim-test
 
 .PHONY: nvim-test
 nvim-test: $(NVIM_TEST)
 
 $(NVIM_TEST):
-	git clone --depth 1 --branch v1.2.0 https://github.com/lewis6991/nvim-test $@
+	@mkdir -p deps
+	if [ -d "$(HOME)/lazy/nvim-test" ]; then \
+	  ln -sf $(HOME)/lazy/nvim-test $@; \
+	else \
+	  git clone --depth 1 --branch v1.3.0 https://github.com/lewis6991/nvim-test $@; \
+	fi
 	$@/bin/nvim-test --init
 
 .PHONY: test
@@ -62,7 +69,7 @@ STYLUA_PLATFORM_MACOS := macos-aarch64
 STYLUA_PLATFORM_LINUX := linux-x86_64
 STYLUA_PLATFORM := $(STYLUA_PLATFORM_$(UNAME))
 
-STYLUA_VERSION := v2.0.2
+STYLUA_VERSION := v2.3.1
 STYLUA_ZIP := stylua-$(STYLUA_PLATFORM).zip
 STYLUA_URL_BASE := https://github.com/JohnnyMorganz/StyLua/releases/download
 STYLUA_URL := $(STYLUA_URL_BASE)/$(STYLUA_VERSION)/$(STYLUA_ZIP)
@@ -86,7 +93,6 @@ stylua-check: $(STYLUA)
 
 .PHONY: stylua-run
 stylua-run: $(STYLUA)
-	nvim +'lua u.script.gen()' +q # should harmless...
 	$(STYLUA) $(LUA_FILES)
 
 .PHONY: build
@@ -98,28 +104,45 @@ doc-check: gen_help
 	git diff --exit-code -- doc
 
 ifeq ($(shell uname -m),arm64)
-    LUALS_ARCH ?= arm64
+    EMMYLUA_ARCH ?= arm64
 else
-    LUALS_ARCH ?= x64
+    EMMYLUA_ARCH ?= x64
 endif
 
-LUALS_VERSION := 3.14.0
-LUALS := deps/lua-language-server-$(LUALS_VERSION)-$(shell uname -s)-$(LUALS_ARCH)
-LUALS_TARBALL := $(LUALS).tar.gz
-LUALS_URL := https://github.com/LuaLS/lua-language-server/releases/download/$(LUALS_VERSION)/$(notdir $(LUALS_TARBALL))
+EMMYLUA_REF := 0.11.0
+EMMYLUA_OS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
+EMMYLUA_RELEASE_URL := https://github.com/EmmyLuaLs/emmylua-analyzer-rust/releases/download/$(EMMYLUA_REF)/emmylua_check-$(EMMYLUA_OS)-$(EMMYLUA_ARCH).tar.gz
+EMMYLUA_RELEASE_TAR := deps/emmylua_check-$(EMMYLUA_REF)-$(EMMYLUA_OS)-$(EMMYLUA_ARCH).tar.gz
+EMMYLUA_DIR := deps/emmylua
+EMMYLUA_BIN := $(EMMYLUA_DIR)/emmylua_check
 
-.PHONY: luals
-luals: $(LUALS)
+.PHONY: emmylua
+emmylua: $(EMMYLUA_BIN)
 
-$(LUALS):
-	wget --directory-prefix=$(dir $@) $(LUALS_URL)
-	mkdir -p $@
-	tar -xf $(LUALS_TARBALL) -C $@
-	rm -rf $(LUALS_TARBALL)
+ifeq ($(shell echo $(EMMYLUA_REF) | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$$'),$(EMMYLUA_REF))
 
-.PHONY: luals-check
-luals-check: $(LUALS) $(NVIM_TEST)
-	VIMRUNTIME=$(XDG_DATA_HOME)/nvim-test/nvim-test-$(NVIM_TEST_VERSION)/share/nvim/runtime \
-		$(LUALS)/bin/lua-language-server \
-			--configpath=../.luarc.jsonc \
-			--check=lua
+$(EMMYLUA_BIN):
+	mkdir -p $(EMMYLUA_DIR)
+	curl -L $(EMMYLUA_RELEASE_URL) -o $(EMMYLUA_RELEASE_TAR)
+	tar -xzf $(EMMYLUA_RELEASE_TAR) -C $(EMMYLUA_DIR)
+
+else
+
+$(EMMYLUA_BIN):
+	git clone --filter=blob:none https://github.com/EmmyLuaLs/emmylua-analyzer-rust.git $(EMMYLUA_DIR)
+	git -C $(EMMYLUA_DIR) checkout $(EMMYLUA_SHA)
+	cd $(EMMYLUA_DIR) && cargo build --release --package emmylua_check
+
+endif
+
+NVIM_TEST_RUNTIME=$(XDG_DATA_HOME)/nvim-test/nvim-test-$(NVIM_TEST_VERSION)/share/nvim/runtime
+
+$(NVIM_TEST_RUNTIME): $(NVIM_TEST)
+	$^/bin/nvim-test --init
+
+.PHONY: emmylua-check
+emmylua-check: $(EMMYLUA_BIN) $(NVIM_TEST_RUNTIME)
+	VIMRUNTIME=$(NVIM_TEST_RUNTIME) \
+		$(EMMYLUA_BIN) . \
+		--ignore 'test/**/*' \
+		--ignore gen_help.lua

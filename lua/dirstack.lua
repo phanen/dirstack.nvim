@@ -12,9 +12,8 @@ local u = {
 local M = {}
 
 local log = function(msg) return vim.notify(('[Dirstack] %s'):format(msg)) end
-M.lru = u.class.lru { ---@diagnostic disable-next-line: missing-fields
-  { key = fn.getcwd() },
-}
+M.lru = u.class.lru()
+M.lru:access(fn.getcwd())
 M.curr = M.lru.head.next
 
 ---@param dir string

@@ -4,79 +4,55 @@ on:
   pull_request:
 
 jobs:
-  test:
+  tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     strategy:
-
       # Nightly can often fail as it is a moving target so disable fail-fast so
       # we can always see if the over versions pass or not.
       fail-fast: false
 
       matrix:
         neovim_branch:
-          - 'v0.10.4'
-          - 'v0.11.0'
-          - 'nightly'
+          - "v0.10.4"
+          - "v0.11.0"
+          - "nightly"
 
     env:
       NVIM_TEST_VERSION: ${{ matrix.neovim_branch }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - uses: leafo/gh-actions-lua@v11
+      - uses: lewis6991/gh-actions-lua@master
         with:
           luaVersion: "5.1.5"
 
-      - uses: leafo/gh-actions-luarocks@v4
+      - uses: leafo/gh-actions-luarocks@v6
 
       - name: Download nvim-test
         run: make nvim-test
 
       - name: Run Test
+        env: # we use "gh"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make test
 
-  stylua:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download stylua
-        run: make stylua
-
-      - name: Lint
-        run: make stylua-check
-
-  luals:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - uses: leafo/gh-actions-lua@v11
-        with:
-          luaVersion: "5.1.5"
-
-      - uses: leafo/gh-actions-luarocks@v4
-
-      - name: Download nvim-test
-        run: make nvim-test
-
-      - name: Download LuaLS
-        run: make luals
-
-      - name: Lint
-        run: make luals-check
   docs:
     runs-on: ubuntu-latest
-    needs: test
+    needs: tests
     if: ${{ github.ref == 'refs/heads/master' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: "stable"
+      - name: Generate README providers section
+        run: nvim -l scripts/gen_readme.lua
       - name: panvimdoc
         uses: kdheepak/panvimdoc@main
         with:
@@ -84,8 +60,26 @@ jobs:
           version: "Neovim >= 0.10.0"
           demojify: true
           treesitter: true
+      - name: Check doc changes
+        id: check_doc_changes
+        run: |
+          set -e
+          git fetch
+          changed_files=$(git diff --name-only HEAD doc/)
+          abort_commit=true
+          for file in $changed_files; do
+            # Check if only the first line is changed
+            diff_output=$(git diff HEAD "$file")
+            # Count changed lines not in the first line
+            if echo "$diff_output" | grep -E '^@@' | grep -v '@@ -1,'; then
+              abort_commit=false
+              break
+            fi
+          done
+          echo "abort_commit=$abort_commit" >> $GITHUB_OUTPUT
       - name: Push changes
-        uses: stefanzweifel/git-auto-commit-action@v4
+        if: steps.check_doc_changes.outputs.abort_commit == 'false'
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "chore(build): auto-generate vimdoc"
           commit_user_name: "github-actions[bot]"
@@ -97,7 +91,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/master' }}
     needs:
       - docs
-      - test
+      - tests
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
@@ -105,7 +99,7 @@ jobs:
         with:
           release-type: simple
           package-name: dirstack.nvim
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: tag stable versions
         if: ${{ steps.release.outputs.release_created }}
         run: |
